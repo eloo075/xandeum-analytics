@@ -1,14 +1,11 @@
-<<<<<<< HEAD
-# xandeum-analytics
-=======
 # Xandeum pNode Analytics Platform
 
 A modern analytics platform for Xandeum pNodes, providing insights into the network of storage provider nodes. Similar to Solana validator dashboards like stakewiz.com and validators.app, but designed specifically for Xandeum's storage provider network.
 
 ## Live Link / Repository
 
-- Live site: https://xandeum-analytics-mom2xhe79-eloo075s-projects.vercel.app
-- GitHub repository: https://github.com/your-org/xandeum-analytics
+- Live site: https://xandeum-analytics-rnj6.vercel.app/
+- GitHub repository: https://github.com/eloo075/xandeum-analytics
 
 Replace the above with your actual deployment URL and repository once created (see Deployment and Publishing sections below).
 
@@ -235,4 +232,3 @@ For questions about the Xandeum network and API:
 - Join the [Xandeum Discord](https://discord.gg/uqRSmmM5m)
 - Visit [xandeum.network](https://xandeum.network) and check the Docs section
 
->>>>>>> aa5273b (Initial commit: Xandeum pNode Analytics)
