@@ -6,9 +6,7 @@ A modern analytics platform for Xandeum pNodes, providing insights into the netw
 
 - Live site: https://xandeum-analytics-rnj6.vercel.app/
 - GitHub repository: https://github.com/eloo075/xandeum-analytics
-
-Replace the above with your actual deployment URL and repository once created (see Deployment and Publishing sections below).
-
+\r\n
 ## Features
 
 - **Real-time pNode Data**: Retrieves all pNodes appearing in gossip using pNode RPC (pRPC) calls
@@ -227,5 +225,6 @@ MIT
 For questions about the Xandeum network and API:
 - Join the [Xandeum Discord](https://discord.gg/uqRSmmM5m)
 - Visit [xandeum.network](https://xandeum.network) and check the Docs section
+
 
 
