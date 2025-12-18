@@ -6,14 +6,24 @@ export interface PNode {
   address?: string;
   version?: string;
   uptime?: number;
+  /**
+   * Storage capacity in BYTES (as returned by pRPC, e.g. `storage_committed`)
+   */
   storageCapacity?: number;
+  /**
+   * Storage used in BYTES (as returned by pRPC, e.g. `storage_used`)
+   */
   storageUsed?: number;
   reputation?: number;
   status?: 'online' | 'offline' | 'syncing';
   lastSeen?: number;
   region?: string;
   latency?: number;
-  [key: string]: any; // Allow for additional fields from RPC
+  rpcPort?: number;
+  isPublic?: boolean;
+  storageUsagePercent?: number;
+  raw?: unknown;
+  [key: string]: any; // Allow for additional fields
 }
 
 export interface PNodeStats {
@@ -35,4 +45,3 @@ export interface RPCResponse<T> {
     message: string;
   };
 }
-

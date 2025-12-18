@@ -184,17 +184,11 @@ export function PNodeTable({ pnodes, isLoading, onNodeClick, sortBy, sortOrder }
               <td className="py-3 px-4">
                 <div className="text-sm">
                   <div className="text-slate-900 dark:text-white font-medium">
-                    {formatBytes((node.storageUsed || 0) * 1024 * 1024 * 1024 * 1024)} /{' '}
-                    {formatBytes((node.storageCapacity || 0) * 1024 * 1024 * 1024 * 1024)}
+                    {formatBytes(node.storageUsed || 0)} /{' '}
+                    {formatBytes(node.storageCapacity || 0)}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                    {node.storageCapacity
-                      ? (
-                          ((node.storageUsed || 0) / node.storageCapacity) *
-                          100
-                        ).toFixed(1)
-                      : 0}
-                    % used
+                    {(node.storageUsagePercent ?? (node.storageCapacity ? ((node.storageUsed || 0) / node.storageCapacity) * 100 : 0)).toFixed(1)}% used
                   </div>
                 </div>
               </td>
@@ -234,4 +228,6 @@ export function PNodeTable({ pnodes, isLoading, onNodeClick, sortBy, sortOrder }
     </div>
   );
 }
+
+
 

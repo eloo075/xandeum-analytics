@@ -44,10 +44,10 @@ export function StorageChart({ pnodes }: StorageChartProps) {
           <YAxis 
             stroke="#64748b"
             fontSize={12}
-            tickFormatter={(value) => `${(value / 1024).toFixed(0)}TB`}
+            tickFormatter={(value: number) => formatBytes(value, 0)}
           />
           <Tooltip 
-            formatter={(value: number) => formatBytes(value * 1024 * 1024 * 1024 * 1024)}
+            formatter={(value: number) => formatBytes(value)}
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
           />
           <Legend />
@@ -58,4 +58,6 @@ export function StorageChart({ pnodes }: StorageChartProps) {
     </div>
   );
 }
+
+
 

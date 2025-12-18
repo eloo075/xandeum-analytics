@@ -107,31 +107,27 @@ Vercel will give you a live URL to share for review.
 
 ## Configuration
 
-### RPC Endpoint
+### pRPC Seeds (Gossip Discovery)
 
-The platform connects to Xandeum pNode RPC endpoints. You can configure the RPC endpoint in two ways:
+The platform discovers pNodes **from gossip** by querying Xandeum pRPC seed nodes **server-side** (via Next.js API routes):
 
-1. **Environment Variable** (Recommended):
-   Create a `.env.local` file:
+- JSON-RPC endpoint: `http://<seed-ip>:6000/rpc`
+- Methods used: `get-pods` and `get-pods-with-stats`
+
+Configure seeds (optional):
+
+1. Copy env example:
+   ```bash
+   cp .env.example .env.local
    ```
-   NEXT_PUBLIC_XANDEUM_RPC=https://rpc.xandeum.network
+2. Set one or more seed IPs (comma-separated):
+   ```
+   XANDEUM_PRPC_SEEDS=173.212.220.65,161.97.97.41
    ```
 
-2. **Direct Configuration**:
-   Edit `lib/rpc.ts` and update the `DEFAULT_RPC_ENDPOINT` constant.
+If you don't set `XANDEUM_PRPC_SEEDS`, the app falls back to the default seed list from the open-source `xandeum-prpc` client.
 
-### RPC Methods
-
-The platform attempts to call various RPC methods to retrieve pNode data:
-- `getPNodes`
-- `get_pnodes`
-- `getClusterNodes`
-- `getGossipNodes`
-
-If none of these methods work, the platform will use mock data for demonstration purposes. Once you have the correct RPC method names from the Xandeum documentation, update `lib/rpc.ts` accordingly.
-
-**Note**: Join the [Xandeum Discord](https://discord.gg/uqRSmmM5m) for API documentation and support.
-
+**Note**: Join the [Xandeum Discord](https://discord.gg/uqRSmmM5m) for network updates and support.
 ## Using the Platform
 
 - **Dashboard**: Overall metrics and charts for quick insight.
@@ -231,4 +227,5 @@ MIT
 For questions about the Xandeum network and API:
 - Join the [Xandeum Discord](https://discord.gg/uqRSmmM5m)
 - Visit [xandeum.network](https://xandeum.network) and check the Docs section
+
 

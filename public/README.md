@@ -26,3 +26,5 @@ For example, if your logo's primary color is `#FF6B35`, you would use:
 
 This color will automatically be applied to all time-related elements (uptime, last seen, etc.).
 
+
+

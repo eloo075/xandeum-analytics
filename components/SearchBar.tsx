@@ -21,3 +21,5 @@ export function SearchBar({ value, onChange, placeholder }: SearchBarProps) {
   );
 }
 
+
+

@@ -46,3 +46,5 @@ If your logo's primary color is a vibrant blue (`#0EA5E9`):
 
 The time-related elements throughout the dashboard will now match your logo color!
 
+
+

@@ -24,11 +24,10 @@ export function NodeDetailModal({ node, onClose }: NodeDetailModalProps) {
       default:
         return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
     }
-  };
-
-  const storageUtilization = node.storageCapacity 
-    ? ((node.storageUsed || 0) / node.storageCapacity * 100).toFixed(1)
-    : 0;
+  };  const storageUtilization = (
+    node.storageUsagePercent ??
+    (node.storageCapacity ? ((node.storageUsed || 0) / node.storageCapacity) * 100 : 0)
+  ).toFixed(1);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -97,13 +96,13 @@ export function NodeDetailModal({ node, onClose }: NodeDetailModalProps) {
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600 dark:text-slate-400">Used</span>
                 <span className="font-semibold text-slate-900 dark:text-white">
-                  {formatBytes((node.storageUsed || 0) * 1024 * 1024 * 1024 * 1024)}
+                  {formatBytes(node.storageUsed || 0)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600 dark:text-slate-400">Capacity</span>
                 <span className="font-semibold text-slate-900 dark:text-white">
-                  {formatBytes((node.storageCapacity || 0) * 1024 * 1024 * 1024 * 1024)}
+                  {formatBytes(node.storageCapacity || 0)}
                 </span>
               </div>
               <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-3 mt-2">
@@ -167,4 +166,8 @@ export function NodeDetailModal({ node, onClose }: NodeDetailModalProps) {
     </div>
   );
 }
+
+
+
+
 

@@ -20,8 +20,8 @@ export function StatsCards({ pnodes }: StatsCardsProps) {
     },
     {
       title: 'Total Storage',
-      value: formatBytes(stats.totalStorage * 1024 * 1024 * 1024 * 1024), // Convert TB to bytes
-      subtitle: `${formatBytes(stats.usedStorage * 1024 * 1024 * 1024 * 1024)} used`,
+      value: formatBytes(stats.totalStorage),
+      subtitle: `${formatBytes(stats.usedStorage)} used`,
       icon: HardDrive,
       color: 'text-green-600',
       bgColor: 'bg-green-50 dark:bg-green-900/20',
@@ -73,4 +73,6 @@ export function StatsCards({ pnodes }: StatsCardsProps) {
     </div>
   );
 }
+
+
 

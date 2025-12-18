@@ -126,7 +126,7 @@ export default function Home() {
                   Error loading pNodes: {error instanceof Error ? error.message : 'Unknown error'}
                 </p>
                 <p className="text-sm text-red-600 dark:text-red-300 mt-1">
-                  Using mock data for demonstration. Configure RPC endpoint in lib/rpc.ts
+                  The dashboard fetches pNodes from pRPC gossip via server-side seeds. If you self-host, set XANDEUM_PRPC_SEEDS (optional) and retry.
                 </p>
               </div>
             )}
@@ -151,4 +151,5 @@ export default function Home() {
     </main>
   );
 }
+
 
