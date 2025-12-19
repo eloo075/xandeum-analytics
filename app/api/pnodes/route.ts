@@ -73,56 +73,78 @@ function normalizePod(pod: Pod, nowMs: number): PNode {
 }
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
+  try {
+    const url = new URL(req.url);
 
-  const withStats = url.searchParams.get('withStats') === '1' || url.searchParams.get('withStats') === 'true';
-  const timeoutMs = Math.min(Math.max(Number(url.searchParams.get('timeoutMs') || 5000), 1000), 30_000);
+    const withStats = url.searchParams.get('withStats') === '1' || url.searchParams.get('withStats') === 'true';
+    const timeoutMs = Math.min(Math.max(Number(url.searchParams.get('timeoutMs') || 5000), 1000), 30_000);
 
-  const seedsFromQuery = parseSeeds(url.searchParams.get('seeds'));
-  const seedsFromEnv = parseSeeds(process.env.XANDEUM_PRPC_SEEDS);
-  const seeds = (seedsFromQuery.length ? seedsFromQuery : seedsFromEnv.length ? seedsFromEnv : DEFAULT_SEED_IPS).slice(0, 12);
+    const seedsFromQuery = parseSeeds(url.searchParams.get('seeds'));
+    const seedsFromEnv = parseSeeds(process.env.XANDEUM_PRPC_SEEDS);
+    const seeds = (seedsFromQuery.length ? seedsFromQuery : seedsFromEnv.length ? seedsFromEnv : DEFAULT_SEED_IPS).slice(0, 12);
 
-  const nowMs = Date.now();
+    const nowMs = Date.now();
 
-  const results = await Promise.allSettled(
-    seeds.map(async (seedIp) => {
-      const res = withStats ? await getPodsWithStats(seedIp, timeoutMs) : await getPods(seedIp, timeoutMs);
-      return { seedIp, res };
-    })
-  );
+    const results = await Promise.allSettled(
+      seeds.map(async (seedIp) => {
+        try {
+          const res = withStats ? await getPodsWithStats(seedIp, timeoutMs) : await getPods(seedIp, timeoutMs);
+          return { seedIp, res };
+        } catch (err: any) {
+          const msg = err?.message || String(err);
+          throw new Error(`${seedIp}: ${msg}`);
+        }
+      })
+    );
 
-  const ok: Array<{ seedIp: string; res: { pods: Pod[] } }> = [];
-  const errors: Array<{ seedIp: string; error: string }> = [];
+    const ok: Array<{ seedIp: string; res: { pods: Pod[] } }> = [];
+    const errors: Array<{ seedIp: string; error: string }> = [];
 
-  for (const r of results) {
-    if (r.status === 'fulfilled') ok.push(r.value);
-    else errors.push({ seedIp: 'unknown', error: r.reason?.message || String(r.reason) });
-  }
-
-  const byPubkey = new Map<string, PNode>();
-  for (const { res } of ok) {
-    for (const pod of res.pods || []) {
-      const node = normalizePod(pod, nowMs);
-      if (!node.pubkey) continue;
-
-      const existing = byPubkey.get(node.pubkey);
-      if (!existing || (existing.lastSeen || 0) < (node.lastSeen || 0)) {
-        byPubkey.set(node.pubkey, node);
+    for (const r of results) {
+      if (r.status === 'fulfilled') ok.push(r.value);
+      else {
+        const raw = r.reason?.message || String(r.reason);
+        const [seedIp, ...rest] = String(raw).split(':');
+        const error = rest.length ? rest.join(':').trim() : String(raw);
+        errors.push({ seedIp: seedIp || 'unknown', error });
       }
     }
+
+    const byPubkey = new Map<string, PNode>();
+    for (const { res } of ok) {
+      for (const pod of res.pods || []) {
+        const node = normalizePod(pod, nowMs);
+        if (!node.pubkey) continue;
+
+        const existing = byPubkey.get(node.pubkey);
+        if (!existing || (existing.lastSeen || 0) < (node.lastSeen || 0)) {
+          byPubkey.set(node.pubkey, node);
+        }
+      }
+    }
+
+    const pnodes = Array.from(byPubkey.values()).sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+
+    return NextResponse.json({
+      pnodes,
+      meta: {
+        fetchedAt: nowMs,
+        withStats,
+        timeoutMs,
+        seedsQueried: seeds,
+        seedsOk: ok.map((x) => x.seedIp),
+        errors: errors.slice(0, 20),
+        envHasSeeds: Boolean(process.env.XANDEUM_PRPC_SEEDS),
+      },
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      {
+        pnodes: [],
+        error: 'Error loading pNodes',
+        details: err?.message || String(err),
+      },
+      { status: 500 }
+    );
   }
-
-  const pnodes = Array.from(byPubkey.values()).sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
-
-  return NextResponse.json({
-    pnodes,
-    meta: {
-      fetchedAt: nowMs,
-      withStats,
-      timeoutMs,
-      seedsQueried: seeds,
-      seedsOk: ok.map((x) => x.seedIp),
-      errors: errors.slice(0, 20),
-    },
-  });
 }
