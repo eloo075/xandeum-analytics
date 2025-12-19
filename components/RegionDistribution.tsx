@@ -1,7 +1,7 @@
 'use client';
 
 import { PNode } from '@/lib/types';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer , Legend } from 'recharts';
 import { MapPin } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -40,7 +40,7 @@ export function RegionDistribution({ pnodes }: RegionDistributionProps) {
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            label={false}
             outerRadius={100}
             fill="#8884d8"
             dataKey="value"
@@ -48,11 +48,7 @@ export function RegionDistribution({ pnodes }: RegionDistributionProps) {
             {regionData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
-          </Pie>
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
-          />
-          <Legend />
+          </Pie><Legend />
         </PieChart>
       </ResponsiveContainer>
       
@@ -73,4 +69,9 @@ export function RegionDistribution({ pnodes }: RegionDistributionProps) {
     </div>
   );
 }
+
+
+
+
+
 

@@ -1,15 +1,50 @@
 import { NextResponse } from 'next/server';
+import geoip from 'geoip-lite';
 import { DEFAULT_SEED_IPS, getPods, getPodsWithStats, parseSeeds, toMillisMaybe, type Pod } from '@/lib/prpc';
 import type { PNode } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+function extractHost(address?: string): string | null {
+  if (!address) return null;
+
+  if (address.includes('://')) {
+    try {
+      return new URL(address).hostname;
+    } catch {
+      // fallthrough
+    }
+  }
+
+  const noPath = address.split('/')[0];
+
+  if (noPath.startsWith('[')) {
+    const end = noPath.indexOf(']');
+    if (end > 1) return noPath.slice(1, end);
+  }
+
+  const parts = noPath.split(':');
+  return parts[0] || null;
+}
+
+function geoRegionFromAddress(address?: string): string | undefined {
+  const host = extractHost(address);
+  if (!host) return undefined;
+
+  // geoip-lite only works with IPs (not domains). If it's a domain, skip.
+  if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return undefined;
+
+  const geo = geoip.lookup(host);
+  if (!geo) return undefined;
+
+  return geo.region ? `${geo.country}-${geo.region}` : geo.country;
+}
+
 function deriveStatus(pod: Pod, nowMs: number): PNode['status'] {
   const lastSeenMs = toMillisMaybe(pod.last_seen_timestamp);
   const ageMs = nowMs - lastSeenMs;
 
-  // Heuristic: gossip "last seen" recency approximates online-ness.
   if (ageMs <= 2 * 60 * 1000) return 'online';
   if (ageMs <= 10 * 60 * 1000) return 'syncing';
   return 'offline';
@@ -25,11 +60,11 @@ function normalizePod(pod: Pod, nowMs: number): PNode {
     address: pod.address,
     version: pod.version,
     uptime: pod.uptime,
-    // Storage values are assumed to be BYTES as returned by pRPC.
     storageCapacity: pod.storage_committed,
     storageUsed: pod.storage_used,
     status: deriveStatus(pod, nowMs),
     lastSeen,
+    region: geoRegionFromAddress(pod.address),
     rpcPort: pod.rpc_port,
     isPublic: pod.is_public,
     storageUsagePercent: pod.storage_usage_percent,
@@ -41,7 +76,6 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
 
   const withStats = url.searchParams.get('withStats') === '1' || url.searchParams.get('withStats') === 'true';
-
   const timeoutMs = Math.min(Math.max(Number(url.searchParams.get('timeoutMs') || 5000), 1000), 30_000);
 
   const seedsFromQuery = parseSeeds(url.searchParams.get('seeds'));
@@ -65,7 +99,6 @@ export async function GET(req: Request) {
     else errors.push({ seedIp: 'unknown', error: r.reason?.message || String(r.reason) });
   }
 
-  // Merge + de-dupe by pubkey (prefer most-recent last_seen_timestamp).
   const byPubkey = new Map<string, PNode>();
   for (const { res } of ok) {
     for (const pod of res.pods || []) {

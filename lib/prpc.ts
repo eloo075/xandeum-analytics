@@ -1,5 +1,7 @@
 import 'server-only';
 
+import axios from 'axios';
+
 /**
  * Minimal server-side pRPC (pNode RPC) client for Xandeum.
  *
@@ -99,31 +101,30 @@ export function prpcUrlForSeed(seedIp: string): string {
 }
 
 export async function prpcCall<T>(seedIp: string, method: string, timeoutMs: number): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
   const request: RpcRequest = { jsonrpc: '2.0', method, id: 1 };
 
   try {
-    const res = await fetch(prpcUrlForSeed(seedIp), {
-      method: 'POST',
+    // NOTE: Node's built-in fetch() rejects port 6000 as a "bad port" (per Fetch spec).
+    // We use axios (Node http/https) to allow requests to :6000.
+    const res = await axios.post<RpcResponse<T>>(prpcUrlForSeed(seedIp), request, {
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-      signal: controller.signal,
-      cache: 'no-store',
+      timeout: timeoutMs,
+      validateStatus: () => true,
     });
 
-    if (!res.ok) throw new PrpcError(`HTTP ${res.status} from seed ${seedIp}`);
+    if (res.status < 200 || res.status >= 300) {
+      throw new PrpcError(`HTTP ${res.status} from seed ${seedIp}`);
+    }
 
-    const json = (await res.json()) as RpcResponse<T>;
+    const json = res.data as RpcResponse<T>;
     if (json.error) throw new PrpcError(`pRPC error from seed ${seedIp}: ${json.error.message}`);
     if (json.result === undefined) throw new PrpcError(`No result from seed ${seedIp} (${method})`);
     return json.result;
   } catch (err: any) {
-    if (err?.name === 'AbortError') throw new PrpcError(`Timeout after ${timeoutMs}ms (${seedIp})`);
+    if (axios.isAxiosError(err) && err.code === 'ECONNABORTED') {
+      throw new PrpcError(`Timeout after ${timeoutMs}ms (${seedIp})`);
+    }
     throw err;
-  } finally {
-    clearTimeout(timeout);
   }
 }
 

@@ -1,9 +1,44 @@
 import { NextResponse } from 'next/server';
+import geoip from 'geoip-lite';
 import { DEFAULT_SEED_IPS, getPods, parseSeeds, toMillisMaybe, type Pod } from '@/lib/prpc';
 import type { PNode } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+function extractHost(address?: string): string | null {
+  if (!address) return null;
+
+  if (address.includes('://')) {
+    try {
+      return new URL(address).hostname;
+    } catch {
+      // fallthrough
+    }
+  }
+
+  const noPath = address.split('/')[0];
+
+  if (noPath.startsWith('[')) {
+    const end = noPath.indexOf(']');
+    if (end > 1) return noPath.slice(1, end);
+  }
+
+  const parts = noPath.split(':');
+  return parts[0] || null;
+}
+
+function geoRegionFromAddress(address?: string): string | undefined {
+  const host = extractHost(address);
+  if (!host) return undefined;
+
+  if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return undefined;
+
+  const geo = geoip.lookup(host);
+  if (!geo) return undefined;
+
+  return geo.region ? `${geo.country}-${geo.region}` : geo.country;
+}
 
 function normalizePodToNode(pod: Pod): PNode {
   const pubkey = pod.pubkey || '';
@@ -18,6 +53,7 @@ function normalizePodToNode(pod: Pod): PNode {
     storageCapacity: pod.storage_committed,
     storageUsed: pod.storage_used,
     lastSeen,
+    region: geoRegionFromAddress(pod.address),
     rpcPort: pod.rpc_port,
     isPublic: pod.is_public,
     storageUsagePercent: pod.storage_usage_percent,
