@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
-import geoip from 'geoip-lite';
 import { DEFAULT_SEED_IPS, getPods, getPodsWithStats, parseSeeds, toMillisMaybe, type Pod } from '@/lib/prpc';
 import type { PNode } from '@/lib/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+let geoipLite: typeof import('geoip-lite') | null = null;
+
+async function getGeoipLite() {
+  if (geoipLite) return geoipLite;
+  try {
+    geoipLite = await import('geoip-lite');
+  } catch {
+    geoipLite = null;
+  }
+  return geoipLite;
+}
 
 function extractHost(address?: string): string | null {
   if (!address) return null;
@@ -28,17 +39,23 @@ function extractHost(address?: string): string | null {
   return parts[0] || null;
 }
 
-function geoRegionFromAddress(address?: string): string | undefined {
+async function geoRegionFromAddress(address?: string): Promise<string | undefined> {
   const host = extractHost(address);
   if (!host) return undefined;
 
   // geoip-lite only works with IPs (not domains). If it's a domain, skip.
   if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return undefined;
 
-  const geo = geoip.lookup(host);
-  if (!geo) return undefined;
+  const geoip = await getGeoipLite();
+  if (!geoip) return undefined;
 
-  return geo.region ? `${geo.country}-${geo.region}` : geo.country;
+  try {
+    const geo = geoip.lookup(host);
+    if (!geo) return undefined;
+    return geo.region ? `${geo.country}-${geo.region}` : geo.country;
+  } catch {
+    return undefined;
+  }
 }
 
 function deriveStatus(pod: Pod, nowMs: number): PNode['status'] {
@@ -50,7 +67,7 @@ function deriveStatus(pod: Pod, nowMs: number): PNode['status'] {
   return 'offline';
 }
 
-function normalizePod(pod: Pod, nowMs: number): PNode {
+async function normalizePod(pod: Pod, nowMs: number): Promise<PNode> {
   const pubkey = pod.pubkey || '';
   const lastSeen = toMillisMaybe(pod.last_seen_timestamp);
 
@@ -64,7 +81,7 @@ function normalizePod(pod: Pod, nowMs: number): PNode {
     storageUsed: pod.storage_used,
     status: deriveStatus(pod, nowMs),
     lastSeen,
-    region: geoRegionFromAddress(pod.address),
+    region: await geoRegionFromAddress(pod.address),
     rpcPort: pod.rpc_port,
     isPublic: pod.is_public,
     storageUsagePercent: pod.storage_usage_percent,
@@ -113,7 +130,7 @@ export async function GET(req: Request) {
     const byPubkey = new Map<string, PNode>();
     for (const { res } of ok) {
       for (const pod of res.pods || []) {
-        const node = normalizePod(pod, nowMs);
+        const node = await normalizePod(pod, nowMs);
         if (!node.pubkey) continue;
 
         const existing = byPubkey.get(node.pubkey);
