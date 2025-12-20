@@ -14,6 +14,8 @@ import { NetworkHealth } from '@/components/NetworkHealth';
 import { StorageChart } from '@/components/StorageChart';
 import { ReputationChart } from '@/components/ReputationChart';
 import { RegionDistribution } from '@/components/RegionDistribution';
+import { VersionDistribution } from '@/components/VersionDistribution';
+import { StorageUtilizationChart } from '@/components/StorageUtilizationChart';
 import { ExportButton } from '@/components/ExportButton';
 import { NodeDetailModal } from '@/components/NodeDetailModal';
 import { Footer } from '@/components/Footer';
@@ -85,6 +87,8 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <StorageChart pnodes={pnodes} />
               <ReputationChart pnodes={pnodes} />
+              <VersionDistribution pnodes={pnodes} />
+              <StorageUtilizationChart pnodes={pnodes} />
               <div className="lg:col-span-2">
                 <RegionDistribution pnodes={pnodes} />
               </div>

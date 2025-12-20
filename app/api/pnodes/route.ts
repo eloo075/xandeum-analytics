@@ -5,16 +5,22 @@ import type { PNode } from '@/lib/types';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-let geoipLite: typeof import('geoip-lite') | null = null;
+type GeoipLookup = (ip: string) => { country: string; region?: string } | null;
 
-async function getGeoipLite() {
-  if (geoipLite) return geoipLite;
+let geoipLookup: GeoipLookup | null | undefined = undefined;
+
+async function getGeoipLookup(): Promise<GeoipLookup | null> {
+  if (geoipLookup !== undefined) return geoipLookup;
+
   try {
-    geoipLite = await import('geoip-lite');
+    const mod: any = await import('geoip-lite');
+    const candidate = (mod?.lookup || mod?.default?.lookup) as unknown;
+    geoipLookup = typeof candidate === 'function' ? (candidate as GeoipLookup) : null;
   } catch {
-    geoipLite = null;
+    geoipLookup = null;
   }
-  return geoipLite;
+
+  return geoipLookup;
 }
 
 function extractHost(address?: string): string | null {
@@ -46,11 +52,11 @@ async function geoRegionFromAddress(address?: string): Promise<string | undefine
   // geoip-lite only works with IPs (not domains). If it's a domain, skip.
   if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return undefined;
 
-  const geoip = await getGeoipLite();
-  if (!geoip) return undefined;
+  const lookup = await getGeoipLookup();
+  if (!lookup) return undefined;
 
   try {
-    const geo = geoip.lookup(host);
+    const geo = lookup(host);
     if (!geo) return undefined;
     return geo.region ? `${geo.country}-${geo.region}` : geo.country;
   } catch {
