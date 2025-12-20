@@ -14,7 +14,8 @@ export function VersionDistribution({ pnodes }: VersionDistributionProps) {
     const map = new Map<string, number>();
 
     for (const n of pnodes) {
-      const v = (n.version || 'Unknown').trim() || 'Unknown';
+      const raw = (n.version || '').trim();
+      const v = raw ? normalizeVersionLabel(raw) : 'Unknown';
       map.set(v, (map.get(v) || 0) + 1);
     }
 
@@ -41,4 +42,21 @@ export function VersionDistribution({ pnodes }: VersionDistributionProps) {
       </ResponsiveContainer>
     </div>
   );
+}
+
+function normalizeVersionLabel(version: string): string {
+  const v = version.trim();
+  if (!v) return 'Unknown';
+
+  // Example:
+  //  0.8.0-trynet.20251217111503.7a5b024  ->  0.8.0 (trynet)
+  const tryNetMatch = v.match(/^([0-9]+\.[0-9]+\.[0-9]+)-trynet(?:\..*)?$/i);
+  if (tryNetMatch) return `${tryNetMatch[1]} (trynet)`;
+
+  // If there are multiple dashes, keep only the first suffix for readability
+  // e.g. 0.8.0-something-extra -> 0.8.0-something
+  const parts = v.split('-');
+  if (parts.length >= 3) return `${parts[0]}-${parts[1]}`;
+
+  return v;
 }
