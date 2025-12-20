@@ -50,10 +50,10 @@ export function ReputationChart({ pnodes }: ReputationChartProps) {
           <Line 
             type="monotone" 
             dataKey="count" 
-            stroke="#14B8A6" 
+            stroke="#418276" 
             strokeWidth={3}
             name="Number of Nodes"
-            dot={{ fill: '#14B8A6', r: 5 }}
+            dot={{ fill: '#418276', r: 5 }}
             activeDot={{ r: 7 }}
           />
         </LineChart>

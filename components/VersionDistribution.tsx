@@ -37,7 +37,7 @@ export function VersionDistribution({ pnodes }: VersionDistributionProps) {
           <XAxis dataKey="version" stroke="#64748b" fontSize={12} angle={-30} textAnchor="end" height={60} />
           <YAxis stroke="#64748b" fontSize={12} allowDecimals={false} />
           <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
-          <Bar dataKey="count" fill="#0EA5E9" name="Nodes" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="count" fill="#5b2c55" name="Nodes" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -49,9 +49,9 @@ function normalizeVersionLabel(version: string): string {
   if (!v) return 'Unknown';
 
   // Example:
-  //  0.8.0-trynet.20251217111503.7a5b024  ->  0.8.0 (trynet)
+  //  0.8.0-trynet.20251217111503.7a5b024  ->  0.8.0-trynet
   const tryNetMatch = v.match(/^([0-9]+\.[0-9]+\.[0-9]+)-trynet(?:\..*)?$/i);
-  if (tryNetMatch) return `${tryNetMatch[1]} (trynet)`;
+  if (tryNetMatch) return `${tryNetMatch[1]}-trynet`;
 
   // If there are multiple dashes, keep only the first suffix for readability
   // e.g. 0.8.0-something-extra -> 0.8.0-something

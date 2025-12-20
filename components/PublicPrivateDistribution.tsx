@@ -9,7 +9,7 @@ interface PublicPrivateDistributionProps {
   pnodes: PNode[];
 }
 
-const COLORS = ['#14B8A6', '#64748b'];
+const COLORS = ['#418276', '#5b2c55', '#eda746'];
 
 export function PublicPrivateDistribution({ pnodes }: PublicPrivateDistributionProps) {
   const { data, total } = useMemo(() => {

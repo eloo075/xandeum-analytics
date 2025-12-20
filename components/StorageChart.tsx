@@ -51,7 +51,7 @@ export function StorageChart({ pnodes }: StorageChartProps) {
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }}
           />
           <Legend />
-          <Bar dataKey="used" stackId="a" fill="#14B8A6" name="Used Storage" />
+          <Bar dataKey="used" stackId="a" fill="#418276" name="Used Storage" />
           <Bar dataKey="available" stackId="a" fill="#cbd5e1" name="Available Storage" />
         </BarChart>
       </ResponsiveContainer>

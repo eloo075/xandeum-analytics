@@ -60,7 +60,7 @@ export function StorageUtilizationChart({ pnodes }: StorageUtilizationChartProps
           <XAxis dataKey="label" stroke="#64748b" fontSize={12} />
           <YAxis stroke="#64748b" fontSize={12} allowDecimals={false} />
           <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px' }} />
-          <Bar dataKey="count" fill="#14B8A6" name="Nodes" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="count" fill="#418276" name="Nodes" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
