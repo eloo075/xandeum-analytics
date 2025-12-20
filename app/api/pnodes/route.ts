@@ -23,6 +23,26 @@ async function getGeoipLookup(): Promise<GeoipLookup | null> {
   return geoipLookup;
 }
 
+function normalizeExternalPNode(n: any, nowMs: number): PNode {
+  const lastSeenRaw = typeof n?.lastSeen === 'number' ? n.lastSeen : undefined;
+  const lastSeen = typeof lastSeenRaw === 'number' ? toMillisMaybe(lastSeenRaw) : undefined;
+
+  let status: PNode['status'] = n?.status;
+  if (!status && typeof lastSeen === 'number') {
+    // Match server-side logic
+    const ageMs = nowMs - lastSeen;
+    if (ageMs <= 2 * 60 * 1000) status = 'online';
+    else if (ageMs <= 10 * 60 * 1000) status = 'syncing';
+    else status = 'offline';
+  }
+
+  return {
+    ...(n || {}),
+    lastSeen,
+    status,
+  } as PNode;
+}
+
 function extractHost(address?: string): string | null {
   if (!address) return null;
 
@@ -122,7 +142,9 @@ export async function GET(req: Request) {
         const json: any = await res.json();
         // Proxy is expected to return { pnodes, meta? }.
         if (json && Array.isArray(json.pnodes)) {
-          return NextResponse.json(json);
+          const nowMs = Date.now();
+          const pnodes = json.pnodes.map((n: any) => normalizeExternalPNode(n, nowMs));
+          return NextResponse.json({ ...json, pnodes });
         }
       }
       // If proxy is misconfigured or down, fall back to direct pRPC logic below.

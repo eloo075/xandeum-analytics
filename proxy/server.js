@@ -18,6 +18,20 @@ function prpcUrlForSeed(seedIp) {
   return `http://${seedIp}:${DEFAULT_PRPC_PORT}/rpc`;
 }
 
+function toMillisMaybe(ts) {
+  // Accept both seconds and milliseconds.
+  // - seconds since epoch: ~1.7e9
+  // - milliseconds since epoch: ~1.7e12
+  return ts > 10_000_000_000 ? ts : ts * 1000;
+}
+
+function deriveStatus(lastSeenMs, nowMs) {
+  const ageMs = nowMs - lastSeenMs;
+  if (ageMs <= 2 * 60 * 1000) return 'online';
+  if (ageMs <= 10 * 60 * 1000) return 'syncing';
+  return 'offline';
+}
+
 async function prpcCall(seedIp, method, timeoutMs) {
   const request = { jsonrpc: '2.0', method, id: 1 };
 
@@ -101,10 +115,11 @@ app.get('/pnodes', async (req, res) => {
       for (const pod of podsResponse?.pods || []) {
         const pubkey = pod.pubkey || '';
         if (!pubkey) continue;
-        const lastSeen = pod.last_seen_timestamp;
+        const lastSeenMs = toMillisMaybe(Number(pod.last_seen_timestamp || 0));
+        const status = deriveStatus(lastSeenMs, now);
 
         const existing = byPubkey.get(pubkey);
-        if (!existing || (existing.lastSeen || 0) < (lastSeen || 0)) {
+        if (!existing || (existing.lastSeen || 0) < (lastSeenMs || 0)) {
           byPubkey.set(pubkey, {
             id: pubkey,
             pubkey,
@@ -113,7 +128,8 @@ app.get('/pnodes', async (req, res) => {
             uptime: pod.uptime,
             storageCapacity: pod.storage_committed,
             storageUsed: pod.storage_used,
-            lastSeen,
+            lastSeen: lastSeenMs,
+            status,
             rpcPort: pod.rpc_port,
             isPublic: pod.is_public,
             storageUsagePercent: pod.storage_usage_percent,
