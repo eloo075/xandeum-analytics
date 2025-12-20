@@ -97,6 +97,37 @@ async function normalizePod(pod: Pod, nowMs: number): Promise<PNode> {
 
 export async function GET(req: Request) {
   try {
+    const proxyBase = (process.env.PNODE_PROXY_URL || '').trim();
+    if (proxyBase) {
+      const incomingUrl = new URL(req.url);
+      const base = proxyBase.endsWith('/') ? proxyBase.slice(0, -1) : proxyBase;
+      const proxyUrl = new URL(`${base}/pnodes`);
+
+      // Forward relevant query params
+      const withStats = incomingUrl.searchParams.get('withStats');
+      const timeoutMs = incomingUrl.searchParams.get('timeoutMs');
+      const seeds = incomingUrl.searchParams.get('seeds');
+      if (withStats !== null) proxyUrl.searchParams.set('withStats', withStats);
+      if (timeoutMs !== null) proxyUrl.searchParams.set('timeoutMs', timeoutMs);
+      if (seeds !== null) proxyUrl.searchParams.set('seeds', seeds);
+
+      const res = await fetch(proxyUrl.toString(), {
+        headers: {
+          Accept: 'application/json',
+        },
+        cache: 'no-store',
+      });
+
+      if (res.ok) {
+        const json: any = await res.json();
+        // Proxy is expected to return { pnodes, meta? }.
+        if (json && Array.isArray(json.pnodes)) {
+          return NextResponse.json(json);
+        }
+      }
+      // If proxy is misconfigured or down, fall back to direct pRPC logic below.
+    }
+
     const url = new URL(req.url);
 
     const withStats = url.searchParams.get('withStats') === '1' || url.searchParams.get('withStats') === 'true';
